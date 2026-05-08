@@ -1,0 +1,14 @@
+services:
+  time-app:
+    container_name: time-app
+    image: ghcr.io/${GITHUB_REPOSITORY}/time-app:latest
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - NODE_ENV=production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
