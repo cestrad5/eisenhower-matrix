@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCBdWizhEhesPGlU3zz7pD1I6ro11M7T_4",
-  authDomain: "turnero-app-e4e5d.firebaseapp.com",
-  projectId: "turnero-app-e4e5d",
-  storageBucket: "turnero-app-e4e5d.firebasestorage.app",
-  messagingSenderId: "189565722264",
-  appId: "1:189565722264:web:9e79a89335652597677aed"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
