@@ -34,6 +34,8 @@ export default function MatrixBoard() {
   const [loading, setLoading] = useState(true);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
+  const [activeAddQuadrant, setActiveAddQuadrant] = useState(null);
+  const [inlineTask, setInlineTask] = useState('');
 
   // Handle Auth
   useEffect(() => {
@@ -109,13 +111,14 @@ export default function MatrixBoard() {
     }
   };
 
-  const addTask = async (e) => {
-    e.preventDefault();
-    if (!newTask.trim() || !user) return;
+  const addTask = async (e, quadrant = 'inbox') => {
+    if (e) e.preventDefault();
+    const titleToAdd = quadrant === 'inbox' ? newTask : inlineTask;
+    if (!titleToAdd.trim() || !user) return;
     
     const taskData = {
-      title: newTask,
-      quadrant: 'inbox',
+      title: titleToAdd,
+      quadrant: quadrant,
       completed: false,
       userId: user.uid,
       createdAt: isDemo ? { seconds: Date.now() / 1000 } : serverTimestamp()
@@ -125,13 +128,21 @@ export default function MatrixBoard() {
       const newId = 'demo-' + Date.now();
       setTasks(prev => ({
         ...prev,
-        inbox: [{ id: newId, ...taskData }, ...prev.inbox]
+        [quadrant]: [{ id: newId, ...taskData }, ...prev[quadrant]]
       }));
-      setNewTask('');
+      if (quadrant === 'inbox') setNewTask('');
+      else {
+        setInlineTask('');
+        setActiveAddQuadrant(null);
+      }
     } else {
       try {
         await addDoc(collection(db, 'tasks'), taskData);
-        setNewTask('');
+        if (quadrant === 'inbox') setNewTask('');
+        else {
+          setInlineTask('');
+          setActiveAddQuadrant(null);
+        }
       } catch (err) {
         console.error("Error adding task:", err);
       }
@@ -317,21 +328,25 @@ export default function MatrixBoard() {
   return (
     <div className="main-layout animate-fade">
       <DragDropContext onDragEnd={onDragEnd}>
-        {/* Sidebar Inbox */}
+        {/* Sidebar Inbox - Hidden or compact on mobile */}
         <aside className="sidebar-inbox">
           <div className="sidebar-header">
-            <h2><Inbox size={24}/> Bandeja</h2>
-            <p className="text-secondary text-sm">Vacíe sus ideas aquí primero.</p>
+            <div className="flex items-center justify-between w-full">
+              <h2><Inbox size={22}/> Bandeja</h2>
+            </div>
+            <p className="text-secondary text-xs opacity-70">Captura tus pensamientos sin filtros.</p>
           </div>
 
-          <form onSubmit={addTask} className="add-task-form">
+          <form onSubmit={(e) => addTask(e, 'inbox')} className="add-task-form compact">
             <input 
               type="text" 
-              placeholder="Nueva tarea..." 
+              placeholder="Nueva idea..." 
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
+              onFocus={(e) => e.target.placeholder = ""}
+              onBlur={(e) => e.target.placeholder = "Nueva idea..."}
             />
-            <button type="submit"><Plus size={20}/></button>
+            <button type="submit" className="add-btn-circle"><Plus size={18}/></button>
           </form>
 
           <Droppable droppableId="inbox">
@@ -339,7 +354,7 @@ export default function MatrixBoard() {
               <div 
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className={clsx('task-list flex-1', snapshot.isDraggingOver && 'dragging-over')}
+                className={clsx('task-list scrollbar-hide', snapshot.isDraggingOver && 'dragging-over')}
               >
                 {tasks.inbox.map((task, index) => (
                   <TaskItem 
@@ -360,38 +375,60 @@ export default function MatrixBoard() {
               </div>
             )}
           </Droppable>
-
-          <div className="sidebar-footer mt-auto pt-4 border-t border-glass">
-             <button onClick={logout} className="logout-btn w-full">
-               <LogOut size={18}/> Salir de la sesión
-             </button>
-          </div>
         </aside>
 
         {/* Main Grid Area */}
         <main className="content-area">
           <nav className="board-nav">
-             <div className="logo-text gradient-text">Eisenhower App</div>
-             <div className="user-pill">
-                <div className="user-avatar">{user.displayName?.[0] || 'U'}</div>
-                <span>{user.displayName}</span>
+             <div className="logo-text gradient-text">TIME</div>
+             <div className="flex items-center gap-4">
+                <div className="user-pill discrete">
+                   <div className="user-avatar">{user.displayName?.[0] || 'U'}</div>
+                   <span className="hidden sm:inline">{user.displayName?.split(' ')[0]}</span>
+                </div>
+                <button onClick={logout} className="action-btn text-red-400 hover:bg-red-500/10 p-2 rounded-full" title="Salir">
+                  <LogOut size={18}/>
+                </button>
              </div>
           </nav>
 
-          <div className="matrix-container">
+          <div className="matrix-container full-height">
             {Object.entries(QUADRANTS).filter(([id]) => id !== 'inbox').map(([id, q]) => (
-              <div key={id} className="quadrant-box glass p-6">
-                <div className="quadrant-header mb-4">
-                  <span className="p-2 rounded-lg" style={{ background: `${q.color}20`, color: q.color }}>{q.icon}</span>
-                  <h2 className="font-bold">{q.title}</h2>
+              <div key={id} className="quadrant-box glass">
+                <div className="quadrant-header">
+                  <div className="flex items-center gap-3">
+                    <span className="q-icon-box" style={{ color: q.color }}>{q.icon}</span>
+                    <h2 className="text-sm font-bold uppercase tracking-wider">{q.title}</h2>
+                  </div>
+                  <button 
+                    onClick={() => setActiveAddQuadrant(activeAddQuadrant === id ? null : id)}
+                    className={clsx("add-inline-trigger", activeAddQuadrant === id && "active")}
+                  >
+                    <Plus size={16}/>
+                  </button>
                 </div>
+
+                {activeAddQuadrant === id && (
+                  <form 
+                    onSubmit={(e) => addTask(e, id)} 
+                    className="inline-add-form animate-slide-down"
+                  >
+                    <input 
+                      autoFocus
+                      placeholder="¿Qué sigue?" 
+                      value={inlineTask}
+                      onChange={(e) => setInlineTask(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Escape' && setActiveAddQuadrant(null)}
+                    />
+                  </form>
+                )}
 
                 <Droppable droppableId={id}>
                   {(provided, snapshot) => (
                     <div 
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className={clsx('task-list min-h-[250px]', snapshot.isDraggingOver && 'dragging-over')}
+                      className={clsx('task-list quadrant-list', snapshot.isDraggingOver && 'dragging-over')}
                     >
                       {tasks[id].map((task, index) => (
                         <TaskItem 
@@ -409,8 +446,8 @@ export default function MatrixBoard() {
                         />
                       ))}
                       {provided.placeholder}
-                      {tasks[id].length === 0 && !snapshot.isDraggingOver && (
-                        <div className="empty-state">No hay tareas</div>
+                      {tasks[id].length === 0 && !snapshot.isDraggingOver && !activeAddQuadrant && (
+                        <div className="empty-state-minimal">Listo.</div>
                       )}
                     </div>
                   )}

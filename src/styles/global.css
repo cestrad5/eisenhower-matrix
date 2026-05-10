@@ -343,193 +343,221 @@ h1, h2, h3 {
   font-size: 0.9rem;
 }
 
-/* --- Dashboard Layout --- */
+/* --- Dashboard Layout & Steve Jobs Refinements --- */
 
 .main-layout {
   display: grid;
   grid-template-columns: 1fr;
   min-height: 100vh;
+  background: radial-gradient(circle at top right, #1a1a2e, #0f0f1a);
 }
 
 @media (min-width: 1024px) {
   .main-layout {
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 300px 1fr;
   }
 }
 
 .sidebar-inbox {
-  background: rgba(255, 255, 255, 0.02);
-  border-right: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
-  padding: 2rem 1.5rem;
+  padding: 1.5rem;
+  max-height: 100vh;
 }
 
-.sidebar-header {
-  margin-bottom: 2rem;
-}
-
-.sidebar-header h2 {
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
+@media (max-width: 1024px) {
+  .sidebar-inbox {
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
 }
 
 .content-area {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 1.5rem;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .matrix-container {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
+  flex: 1;
 }
 
 @media (min-width: 768px) {
   .matrix-container {
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
   }
 }
 
 .quadrant-box {
   display: flex;
   flex-direction: column;
-  min-height: 350px;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* --- Task Cards & Actions --- */
-
-.task-card {
-  padding: 1rem;
+.quadrant-header {
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 0.8rem;
-  transition: var(--transition);
-}
-
-.task-card.completed {
-  opacity: 0.5;
-}
-
-.task-card.completed .task-text {
-  text-decoration: line-through;
-}
-
-.task-text {
-  flex: 1;
-  font-size: 0.95rem;
-}
-
-.task-actions {
-  display: flex;
-  gap: 0.4rem;
-  opacity: 0;
-  transition: var(--transition);
-}
-
-.task-card:hover .task-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: var(--transition);
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.action-btn.btn-complete:hover {
-  color: var(--color-q4);
-}
-
-.action-btn.btn-delete:hover {
-  color: var(--color-q1);
-}
-
-.edit-input {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--color-q2);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  outline: none;
-}
-
-.add-task-form {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.add-task-form input {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  color: white;
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  outline: none;
-  transition: var(--transition);
-}
-
-.add-task-form input:focus {
-  border-color: var(--color-q2);
-}
-
-.add-task-form button {
-  background: var(--color-q2);
-  color: white;
-  border: none;
-  padding: 0 1rem;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.board-nav {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.logo-text {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.user-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.4rem 1rem;
-  border-radius: 100px;
-  border: 1px solid var(--glass-border);
-}
-
-.user-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-q2);
+.q-icon-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 700;
+}
+
+.add-inline-trigger {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-inline-trigger:hover, .add-inline-trigger.active {
+  background: white;
+  color: black;
+  transform: scale(1.1);
+}
+
+.inline-add-form {
+  padding: 0.5rem 1rem;
+}
+
+.inline-add-form input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  color: white;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.task-list {
+  padding: 1rem;
+  flex: 1; /* This ensures the list fills the quadrant */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 100px;
+}
+
+/* --- Steve Jobs Animations & D&D --- */
+
+.task-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.task-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+}
+
+.task-card.dragging {
+  background: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  transform: scale(1.05) rotate(2deg) !important;
+  border-color: white;
+}
+
+.dragging-over {
+  background: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.02);
+}
+
+.empty-state-minimal {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.3;
+}
+
+/* --- Mobile Fixes --- */
+
+@media (max-width: 640px) {
+  .content-area { padding: 1rem; }
+  .logo-text { font-size: 1.2rem; }
+  .add-task-form.compact input { font-size: 0.9rem; }
+  .task-text { font-size: 0.9rem; }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.user-pill.discrete {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.add-btn-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  color: black;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.add-task-form.compact {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 4px 4px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.add-task-form.compact input {
+  padding: 0.5rem 0;
 }
