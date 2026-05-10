@@ -338,7 +338,7 @@ export default function MatrixBoard() {
           ))}
         </div>
       </DragDropContext>
-
+      <style jsx>{`
          /* Landing Page Premium Styles */
         .landing-wrapper {
           position: relative;
