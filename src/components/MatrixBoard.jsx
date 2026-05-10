@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Plus, Trash2, GripVertical, AlertCircle, Calendar, Users, Coffee, LogIn, LogOut, User as UserIcon, CheckCircle2, Edit2, Inbox, Save, X } from 'lucide-react';
+import { Plus, Trash2, GripVertical, AlertCircle, Calendar, Users, Coffee, LogIn, LogOut, User as UserIcon, Check, Edit2, Inbox, Save, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -470,21 +470,21 @@ function TaskItem({ task, index, deleteTask, toggleComplete, isEditing, editTitl
           ref={provided.innerRef}
           {...provided.draggableProps}
           className={clsx(
-            'task-card glass-hover',
+            'task-card',
             task.completed && 'completed',
             snapshot.isDragging && 'dragging'
           )}
         >
-          <div {...provided.dragHandleProps} className="drag-handle">
+          <div {...provided.dragHandleProps} className="drag-handle text-gray-400">
             <GripVertical size={16} />
           </div>
           
-          <button 
+          <div 
             onClick={() => toggleComplete(task)}
-            className={clsx('action-btn btn-complete', task.completed && 'text-green-500')}
+            className="task-checkbox"
           >
-            <CheckCircle2 size={18} fill={task.completed ? 'currentColor' : 'none'} />
-          </button>
+            {task.completed && <Check size={14} color="#ffffff" strokeWidth={3} />}
+          </div>
 
           {isEditing ? (
             <input 
@@ -495,7 +495,12 @@ function TaskItem({ task, index, deleteTask, toggleComplete, isEditing, editTitl
               onKeyDown={(e) => e.key === 'Enter' && saveEdit(task)}
             />
           ) : (
-            <span className="task-text">{task.title}</span>
+            <span 
+              className="task-text-content"
+              onClick={() => toggleComplete(task)}
+            >
+              {task.title}
+            </span>
           )}
 
           <div className="task-actions">

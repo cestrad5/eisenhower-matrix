@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
 
 :root {
-  /* Color Palette - Psychological focus */
-  --bg-dark: #0a0b10;
-  --card-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  /* Color Palette - Apple Light Mode focus */
+  --bg-main: #f5f5f7;
+  --card-bg: #ffffff;
+  --glass-border: rgba(0, 0, 0, 0.08);
   
   /* Eisenhower Matrix Colors (Psychological) */
-  --color-q1: #ff5f57; /* Red/Orange - Urgency & Action */
-  --color-q2: #4ba3ff; /* Blue - Calm, Strategy & Focus */
-  --color-q3: #ffbd2e; /* Amber - Warning, External pressure */
-  --color-q4: #28c840; /* Green/Mint - Low stress, Relaxed */
+  --color-q1: #ff3b30; /* Red - Urgency */
+  --color-q2: #007aff; /* Blue - Strategy */
+  --color-q3: #ff9500; /* Amber - Warning */
+  --color-q4: #34c759; /* Green - Low stress */
   
-  --text-primary: #f0f0f0;
-  --text-secondary: #a0a0a0;
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
   
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -26,13 +26,10 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background-color: var(--bg-dark);
+  background-color: var(--bg-main);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(circle at 20% 20%, rgba(75, 163, 255, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(255, 95, 87, 0.05) 0%, transparent 40%);
 }
 
 h1, h2, h3 {
@@ -40,13 +37,12 @@ h1, h2, h3 {
   letter-spacing: -0.02em;
 }
 
-/* Glassmorphism Utility */
+/* Glassmorphism Utility (Now Apple Card Style) */
 .glass {
   background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  border-radius: 24px;
+  border-radius: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 .glass-hover:hover {
@@ -140,12 +136,11 @@ h1, h2, h3 {
   line-height: 1.05;
   font-weight: 800;
   letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-q2), var(--color-q1));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--color-q2); /* Simplified for clean look */
 }
 
 .hero-subtitle {
@@ -164,8 +159,8 @@ h1, h2, h3 {
 }
 
 .btn-primary {
-  background: white;
-  color: black;
+  background: var(--text-primary);
+  color: var(--bg-main);
   border: none;
   padding: 1rem 1.8rem;
   border-radius: 100px;
@@ -175,29 +170,29 @@ h1, h2, h3 {
   align-items: center;
   gap: 0.8rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(255,255,255,0.2);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
 }
 
 .btn-secondary {
-  background: rgba(255,255,255,0.05);
-  color: white;
+  background: transparent;
+  color: var(--text-primary);
   padding: 1rem 1.8rem;
   border-radius: 100px;
   font-weight: 600;
   font-size: 1.05rem;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(0,0,0,0.1);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.03);
+  border-color: rgba(0,0,0,0.2);
 }
 
 .privacy-note {
@@ -212,12 +207,12 @@ h1, h2, h3 {
 }
 
 .mockup-board {
-  background: rgba(20,20,25,0.6);
+  background: var(--card-bg);
   border-radius: 20px;
   padding: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
   transform: rotateY(-5deg) rotateX(5deg);
-  transition: transform 0.5s ease;
+  border: 1px solid var(--glass-border);
 }
 
 .mockup-header {
@@ -248,8 +243,8 @@ h1, h2, h3 {
 }
 
 .bento-box {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--bg-main);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 1rem;
   display: flex;
@@ -349,7 +344,7 @@ h1, h2, h3 {
   display: grid;
   grid-template-columns: 1fr;
   min-height: 100vh;
-  background: radial-gradient(circle at top right, #1a1a2e, #0f0f1a);
+  background-color: var(--bg-main);
 }
 
 @media (min-width: 1024px) {
@@ -359,8 +354,8 @@ h1, h2, h3 {
 }
 
 .sidebar-inbox {
-  background: rgba(0, 0, 0, 0.2);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--card-bg);
+  border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
@@ -371,7 +366,7 @@ h1, h2, h3 {
   .sidebar-inbox {
     max-height: 40vh;
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--glass-border);
   }
 }
 
@@ -409,19 +404,21 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .q-icon-box {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Removed colored background for a cleaner look */
 }
 
 .add-inline-trigger {
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  color: white;
+  background: var(--bg-main);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -433,9 +430,9 @@ h1, h2, h3 {
 }
 
 .add-inline-trigger:hover, .add-inline-trigger.active {
-  background: white;
-  color: black;
-  transform: scale(1.1);
+  background: var(--text-primary);
+  color: var(--card-bg);
+  border-color: var(--text-primary);
 }
 
 .inline-add-form {
@@ -444,11 +441,11 @@ h1, h2, h3 {
 
 .inline-add-form input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-main);
+  border: 1px solid var(--glass-border);
   border-radius: 10px;
   padding: 0.6rem 1rem;
-  color: white;
+  color: var(--text-primary);
   outline: none;
   font-size: 0.9rem;
 }
@@ -465,31 +462,66 @@ h1, h2, h3 {
 /* --- Steve Jobs Animations & D&D --- */
 
 .task-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 0.8rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  transition: all 0.2s ease;
+  /* CRITICAL: Do NOT transition transform here, it conflicts with react-beautiful-dnd on mobile causing freezing */
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  user-select: none;
 }
 
 .task-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateX(4px);
+  background: var(--bg-main);
+}
+
+/* New Checkbox/Strikethrough completion style */
+.task-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.task-card.completed {
+  opacity: 0.5;
+}
+
+.task-card.completed .task-checkbox {
+  background-color: var(--text-secondary);
+  border-color: var(--text-secondary);
+}
+
+.task-card.completed .task-text-content {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.task-text-content {
+  flex: 1;
+  cursor: pointer;
+  font-size: 0.95rem;
 }
 
 .task-card.dragging {
-  background: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-  transform: scale(1.05) rotate(2deg) !important;
-  border-color: white;
+  background: var(--card-bg) !important;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  /* The rotation is now applied directly to the drag style by the library or via a separate class, but we keep it light here */
+  border-color: var(--text-secondary);
 }
 
 .dragging-over {
-  background: rgba(255, 255, 255, 0.05) !important;
-  box-shadow: inset 0 0 20px rgba(255,255,255,0.02);
+  background: var(--bg-main) !important;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
 }
 
 .empty-state-minimal {
@@ -540,8 +572,8 @@ h1, h2, h3 {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: white;
-  color: black;
+  background: var(--text-primary);
+  color: var(--card-bg);
   border: none;
   display: flex;
   align-items: center;
@@ -551,13 +583,17 @@ h1, h2, h3 {
 }
 
 .add-task-form.compact {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card-bg);
   padding: 4px 4px 4px 12px;
   border-radius: 100px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   margin-bottom: 1.5rem;
 }
 
 .add-task-form.compact input {
   padding: 0.5rem 0;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  outline: none;
 }
