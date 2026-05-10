@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Plus, Trash2, GripVertical, AlertCircle, Calendar, Users, Coffee, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { Plus, Trash2, GripVertical, AlertCircle, Calendar, Users, Coffee, LogIn, LogOut, User as UserIcon, CheckCircle2, Edit2, Inbox, Save, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 
 const QUADRANTS = {
+  inbox: { id: 'inbox', title: 'Bandeja de Entrada', color: '#a0a0a0', icon: <Inbox size={18} /> },
   q1: { id: 'q1', title: 'Importante y Urgente', color: 'var(--color-q1)', icon: <AlertCircle size={18} /> },
   q2: { id: 'q2', title: 'Importante y No Urgente', color: 'var(--color-q2)', icon: <Calendar size={18} /> },
   q3: { id: 'q3', title: 'No Importante y Urgente', color: 'var(--color-q3)', icon: <Users size={18} /> },
@@ -28,9 +29,11 @@ const QUADRANTS = {
 export default function MatrixBoard() {
   const [user, setUser] = useState(null);
   const [isDemo, setIsDemo] = useState(false);
-  const [tasks, setTasks] = useState({ q1: [], q2: [], q3: [], q4: [] });
+  const [tasks, setTasks] = useState({ inbox: [], q1: [], q2: [], q3: [], q4: [] });
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
 
   // Handle Auth
   useEffect(() => {
@@ -38,7 +41,7 @@ export default function MatrixBoard() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       if (!user) {
-        setTasks({ q1: [], q2: [], q3: [], q4: [] });
+        setTasks({ inbox: [], q1: [], q2: [], q3: [], q4: [] });
         setLoading(false);
       }
     });
@@ -55,7 +58,7 @@ export default function MatrixBoard() {
 
     const q = query(collection(db, 'tasks'), where('userId', '==', user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newTasks = { q1: [], q2: [], q3: [], q4: [] };
+      const newTasks = { inbox: [], q1: [], q2: [], q3: [], q4: [] };
       snapshot.forEach((doc) => {
         const task = { id: doc.id, ...doc.data() };
         if (newTasks[task.quadrant]) {
@@ -75,22 +78,32 @@ export default function MatrixBoard() {
     return unsubscribe;
   }, [user, isDemo]);
 
-  const login = () => signInWithPopup(auth, googleProvider);
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      console.error("Firebase Login Error:", err.code, err.message);
+      alert(`Error de autenticación: ${err.message}. Asegúrate de que el dominio está autorizado en la consola de Firebase.`);
+    }
+  };
+
   const startDemo = () => {
     setIsDemo(true);
     setUser({ uid: 'demo', displayName: 'Invitado (Demo)', photoURL: null });
     setTasks({
-      q1: [{ id: 'd1', title: 'Resolver crisis del servidor', quadrant: 'q1' }],
-      q2: [{ id: 'd2', title: 'Planificar sprint Q3', quadrant: 'q2' }],
-      q3: [{ id: 'd3', title: 'Responder correos no urgentes', quadrant: 'q3' }],
-      q4: [{ id: 'd4', title: 'Revisar redes sociales', quadrant: 'q4' }]
+      inbox: [{ id: 'd0', title: 'Nuevas ideas de negocio', quadrant: 'inbox', completed: false }],
+      q1: [{ id: 'd1', title: 'Resolver crisis del servidor', quadrant: 'q1', completed: false }],
+      q2: [{ id: 'd2', title: 'Planificar sprint Q3', quadrant: 'q2', completed: false }],
+      q3: [{ id: 'd3', title: 'Responder correos no urgentes', quadrant: 'q3', completed: false }],
+      q4: [{ id: 'd4', title: 'Revisar redes sociales', quadrant: 'q4', completed: true }]
     });
   };
+
   const logout = () => {
     if (isDemo) {
       setIsDemo(false);
       setUser(null);
-      setTasks({ q1: [], q2: [], q3: [], q4: [] });
+      setTasks({ inbox: [], q1: [], q2: [], q3: [], q4: [] });
     } else {
       signOut(auth);
     }
@@ -102,7 +115,8 @@ export default function MatrixBoard() {
     
     const taskData = {
       title: newTask,
-      quadrant: 'q1',
+      quadrant: 'inbox',
+      completed: false,
       userId: user.uid,
       createdAt: isDemo ? { seconds: Date.now() / 1000 } : serverTimestamp()
     };
@@ -111,7 +125,7 @@ export default function MatrixBoard() {
       const newId = 'demo-' + Date.now();
       setTasks(prev => ({
         ...prev,
-        q1: [{ id: newId, ...taskData }, ...prev.q1]
+        inbox: [{ id: newId, ...taskData }, ...prev.inbox]
       }));
       setNewTask('');
     } else {
@@ -122,6 +136,53 @@ export default function MatrixBoard() {
         console.error("Error adding task:", err);
       }
     }
+  };
+
+  const toggleComplete = async (task) => {
+    if (isDemo) {
+      setTasks(prev => {
+        const newTasks = { ...prev };
+        newTasks[task.quadrant] = newTasks[task.quadrant].map(t => 
+          t.id === task.id ? { ...t, completed: !t.completed } : t
+        );
+        return newTasks;
+      });
+    } else {
+      try {
+        await updateDoc(doc(db, 'tasks', task.id), {
+          completed: !task.completed
+        });
+      } catch (err) {
+        console.error("Error toggling complete:", err);
+      }
+    }
+  };
+
+  const startEditing = (task) => {
+    setEditingTaskId(task.id);
+    setEditTitle(task.title);
+  };
+
+  const saveEdit = async (task) => {
+    if (!editTitle.trim()) return;
+    if (isDemo) {
+      setTasks(prev => {
+        const newTasks = { ...prev };
+        newTasks[task.quadrant] = newTasks[task.quadrant].map(t => 
+          t.id === task.id ? { ...t, title: editTitle } : t
+        );
+        return newTasks;
+      });
+    } else {
+      try {
+        await updateDoc(doc(db, 'tasks', task.id), {
+          title: editTitle
+        });
+      } catch (err) {
+        console.error("Error editing task:", err);
+      }
+    }
+    setEditingTaskId(null);
   };
 
   const onDragEnd = async (result) => {
@@ -254,536 +315,167 @@ export default function MatrixBoard() {
   }
 
   return (
-    <div className="board-container">
-      <header className="board-header animate-fade">
-        <div className="header-top">
-          <div className="user-info">
-            {user.photoURL && <img src={user.photoURL} alt={user.displayName} />}
-            <span>Hola, {user.displayName?.split(' ')[0]}</span>
-          </div>
-          <button onClick={logout} className="logout-btn glass">
-            <LogOut size={16} />
-            <span>Salir</span>
-          </button>
-        </div>
-        
-        <h1>Eisenhower Matrix</h1>
-        
-        <form onSubmit={addTask} className="add-task-form glass">
-          <input 
-            type="text" 
-            placeholder="Nueva tarea rápida..." 
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-          />
-          <button type="submit">
-            <Plus size={20} />
-            <span>Añadir</span>
-          </button>
-        </form>
-      </header>
-
+    <div className="main-layout animate-fade">
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="matrix-grid">
-          {Object.entries(QUADRANTS).map(([id, column]) => (
-            <div key={id} className="quadrant-container animate-fade">
-              <div className="quadrant-header" style={{ color: column.color }}>
-                {column.icon}
-                <h2>{column.title}</h2>
+        {/* Sidebar Inbox */}
+        <aside className="sidebar-inbox">
+          <div className="sidebar-header">
+            <h2><Inbox size={24}/> Bandeja</h2>
+            <p className="text-secondary text-sm">Vacíe sus ideas aquí primero.</p>
+          </div>
+
+          <form onSubmit={addTask} className="add-task-form">
+            <input 
+              type="text" 
+              placeholder="Nueva tarea..." 
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+            />
+            <button type="submit"><Plus size={20}/></button>
+          </form>
+
+          <Droppable droppableId="inbox">
+            {(provided, snapshot) => (
+              <div 
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className={clsx('task-list flex-1', snapshot.isDraggingOver && 'dragging-over')}
+              >
+                {tasks.inbox.map((task, index) => (
+                  <TaskItem 
+                    key={task.id} 
+                    task={task} 
+                    index={index} 
+                    deleteTask={deleteTask}
+                    toggleComplete={toggleComplete}
+                    isEditing={editingTaskId === task.id}
+                    editTitle={editTitle}
+                    setEditTitle={setEditTitle}
+                    startEditing={startEditing}
+                    saveEdit={saveEdit}
+                    cancelEdit={() => setEditingTaskId(null)}
+                  />
+                ))}
+                {provided.placeholder}
               </div>
-              
-              <Droppable droppableId={id}>
-                {(provided, snapshot) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className={clsx(
-                      "task-list glass",
-                      snapshot.isDraggingOver && "dragging-over"
-                    )}
-                  >
-                    {tasks[id].map((task, index) => (
-                      <Draggable key={task.id} draggableId={task.id} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={clsx(
-                              "task-card glass-hover",
-                              snapshot.isDragging && "is-dragging"
-                            )}
-                          >
-                            <div {...provided.dragHandleProps} className="drag-handle">
-                              <GripVertical size={16} />
-                            </div>
-                            <span className="task-title">{task.title}</span>
-                            <button 
-                              onClick={() => deleteTask(task.id)}
-                              className="delete-btn"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                    {tasks[id].length === 0 && !snapshot.isDraggingOver && (
-                      <div className="empty-state">No hay tareas</div>
-                    )}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          ))}
-        </div>
+            )}
+          </Droppable>
+
+          <div className="sidebar-footer mt-auto pt-4 border-t border-glass">
+             <button onClick={logout} className="logout-btn w-full">
+               <LogOut size={18}/> Salir de la sesión
+             </button>
+          </div>
+        </aside>
+
+        {/* Main Grid Area */}
+        <main className="content-area">
+          <nav className="board-nav">
+             <div className="logo-text gradient-text">Eisenhower App</div>
+             <div className="user-pill">
+                <div className="user-avatar">{user.displayName?.[0] || 'U'}</div>
+                <span>{user.displayName}</span>
+             </div>
+          </nav>
+
+          <div className="matrix-container">
+            {Object.entries(QUADRANTS).filter(([id]) => id !== 'inbox').map(([id, q]) => (
+              <div key={id} className="quadrant-box glass p-6">
+                <div className="quadrant-header mb-4">
+                  <span className="p-2 rounded-lg" style={{ background: `${q.color}20`, color: q.color }}>{q.icon}</span>
+                  <h2 className="font-bold">{q.title}</h2>
+                </div>
+
+                <Droppable droppableId={id}>
+                  {(provided, snapshot) => (
+                    <div 
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className={clsx('task-list min-h-[250px]', snapshot.isDraggingOver && 'dragging-over')}
+                    >
+                      {tasks[id].map((task, index) => (
+                        <TaskItem 
+                          key={task.id} 
+                          task={task} 
+                          index={index} 
+                          deleteTask={deleteTask}
+                          toggleComplete={toggleComplete}
+                          isEditing={editingTaskId === task.id}
+                          editTitle={editTitle}
+                          setEditTitle={setEditTitle}
+                          startEditing={startEditing}
+                          saveEdit={saveEdit}
+                          cancelEdit={() => setEditingTaskId(null)}
+                        />
+                      ))}
+                      {provided.placeholder}
+                      {tasks[id].length === 0 && !snapshot.isDraggingOver && (
+                        <div className="empty-state">No hay tareas</div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            ))}
+          </div>
+        </main>
       </DragDropContext>
-      <style jsx>{`
-         /* Landing Page Premium Styles */
-        .landing-wrapper {
-          position: relative;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 6rem 2rem;
-          min-height: 100vh;
-        }
-
-        .ambient-glow {
-          position: absolute;
-          top: -10%;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 80vw;
-          height: 60vh;
-          background: radial-gradient(circle, rgba(75,163,255,0.15) 0%, rgba(255,95,87,0.05) 50%, transparent 70%);
-          z-index: -1;
-          filter: blur(80px);
-        }
-
-        .hero-section {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 5rem;
-          align-items: center;
-          margin-bottom: 8rem;
-        }
-
-        @media (min-width: 992px) {
-          .hero-section {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-
-        .hero-content {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 1.5rem;
-        }
-
-        .glass-badge {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: var(--text-secondary);
-        }
-
-        .hero-title {
-          font-size: clamp(3rem, 6vw, 4.5rem);
-          line-height: 1.05;
-          font-weight: 800;
-          letter-spacing: -0.03em;
-        }
-
-        .hero-subtitle {
-          font-size: 1.25rem;
-          color: var(--text-secondary);
-          line-height: 1.6;
-          max-width: 90%;
-        }
-
-        .cta-group {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
-          margin-top: 1rem;
-          width: 100%;
-        }
-
-        .btn-primary {
-          background: white;
-          color: black;
-          border: none;
-          padding: 1rem 1.8rem;
-          border-radius: 100px;
-          font-weight: 600;
-          font-size: 1.05rem;
-          display: flex;
-          align-items: center;
-          gap: 0.8rem;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(255,255,255,0.2);
-        }
-
-        .btn-secondary {
-          background: rgba(255,255,255,0.05);
-          color: white;
-          padding: 1rem 1.8rem;
-          border-radius: 100px;
-          font-weight: 600;
-          font-size: 1.05rem;
-          border: 1px solid rgba(255,255,255,0.1);
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-          background: rgba(255,255,255,0.1);
-          border-color: rgba(255,255,255,0.2);
-        }
-
-        .google-icon {
-          width: 22px;
-          height: 22px;
-        }
-
-        .hero-visual {
-          position: relative;
-          perspective: 1000px;
-        }
-
-        .mockup-board {
-          background: rgba(20,20,25,0.6);
-          border-radius: 20px;
-          padding: 1rem;
-          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-          transform: rotateY(-5deg) rotateX(5deg);
-          transition: transform 0.5s ease;
-        }
-
-        .mockup-board:hover {
-          transform: rotateY(0) rotateX(0);
-        }
-
-        .mockup-header {
-          padding: 0.5rem;
-          margin-bottom: 1rem;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .dots {
-          display: flex;
-          gap: 6px;
-        }
-
-        .dots span {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-        }
-        .red { background: #ff5f56; }
-        .yellow { background: #ffbd2e; }
-        .green { background: #27c93f; }
-
-        .bento-matrix {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-          aspect-ratio: 1;
-        }
-
-        .bento-box {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.05);
-          border-radius: 12px;
-          padding: 1rem;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .b-icon {
-          opacity: 0.8;
-          margin-bottom: auto;
-        }
-        .b-q1 .b-icon { color: var(--color-q1); }
-        .b-q2 .b-icon { color: var(--color-q2); }
-        .b-q3 .b-icon { color: var(--color-q3); }
-        .b-q4 .b-icon { color: var(--color-q4); }
-
-        .b-line {
-          height: 6px;
-          background: rgba(255,255,255,0.1);
-          border-radius: 10px;
-        }
-        .w-full { width: 100%; }
-        .w-3\/4 { width: 75%; }
-        .w-1\/2 { width: 50%; }
-
-        /* Features Bento */
-        .features-bento {
-          margin-bottom: 4rem;
-        }
-
-        .bento-title {
-          text-align: center;
-          margin-bottom: 4rem;
-        }
-
-        .bento-title h2 {
-          font-size: 2.5rem;
-          color: var(--text-secondary);
-        }
-
-        .text-white { color: white; }
-
-        .bento-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 1.5rem;
-        }
-
-        @media (min-width: 768px) {
-          .bento-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-          .item-q1 { grid-column: span 2; }
-          .item-q4 { grid-column: span 2; }
-        }
-
-        @media (min-width: 1024px) {
-          .bento-grid {
-            grid-template-columns: repeat(4, 1fr);
-          }
-          .item-q1 { grid-column: span 2; grid-row: span 2; }
-          .item-q4 { grid-column: span 1; }
-        }
-
-        .bento-item {
-          padding: 2.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          border-radius: 24px;
-        }
-
-        .bento-icon-wrapper {
-          width: 48px;
-          height: 48px;
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .bento-item h3 {
-          font-size: 1.5rem;
-          margin-top: 1rem;
-        }
-
-        .bento-item p {
-          color: var(--text-secondary);
-          line-height: 1.6;
-        }
-
-        /* Rest of the board styles... */
-        .board-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 2rem 1rem;
-        }
-        
-        .header-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-        
-        .user-info {
-          display: flex;
-          align-items: center;
-          gap: 0.8rem;
-          font-weight: 500;
-          color: var(--text-secondary);
-        }
-        
-        .user-info img {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          border: 2px solid var(--glass-border);
-        }
-        
-        .logout-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          font-size: 0.9rem;
-          color: var(--text-secondary);
-          border-radius: 12px;
-          cursor: pointer;
-          transition: var(--transition);
-          background: transparent;
-        }
-        
-        .logout-btn:hover {
-          color: var(--color-q1);
-          background: rgba(255, 95, 87, 0.1);
-        }
-        
-        .board-header {
-          text-align: center;
-          margin-bottom: 3rem;
-        }
-        
-        .board-header h1 {
-          font-size: clamp(2rem, 5vw, 3rem);
-          margin-bottom: 1.5rem;
-          background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        
-        .add-task-form {
-          display: flex;
-          max-width: 500px;
-          margin: 0 auto;
-          padding: 0.5rem;
-          gap: 0.5rem;
-          border-radius: 16px;
-        }
-        
-        .add-task-form input {
-          flex: 1;
-          background: transparent;
-          border: none;
-          color: white;
-          padding: 0.8rem 1rem;
-          font-size: 1rem;
-          outline: none;
-        }
-        
-        .add-task-form button {
-          background: var(--color-q2);
-          color: white;
-          border: none;
-          padding: 0 1.5rem;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: var(--transition);
-        }
-        
-        .matrix-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 2rem;
-        }
-        
-        @media (min-width: 768px) {
-          .matrix-grid {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-        
-        .quadrant-container {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        
-        .quadrant-header {
-          display: flex;
-          align-items: center;
-          gap: 0.8rem;
-          padding: 0 0.5rem;
-        }
-        
-        .quadrant-header h2 {
-          font-size: 1.1rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-        
-        .task-list {
-          min-height: 150px;
-          padding: 1rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.8rem;
-          transition: var(--transition);
-        }
-        
-        .empty-state {
-          text-align: center;
-          color: var(--text-secondary);
-          padding: 2rem;
-          font-size: 0.9rem;
-          opacity: 0.5;
-        }
-        
-        .dragging-over {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.3);
-        }
-        
-        .task-card {
-          padding: 1rem;
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          border-radius: 16px;
-        }
-        
-        .drag-handle {
-          color: var(--text-secondary);
-          cursor: grab;
-        }
-        
-        .task-title {
-          flex: 1;
-        }
-        
-        .delete-btn {
-          background: transparent;
-          border: none;
-          color: rgba(255,255,255,0.2);
-          cursor: pointer;
-          transition: var(--transition);
-        }
-        
-        .delete-btn:hover {
-          color: var(--color-q1);
-        }
-
-        .flex-center {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .loader {
-          width: 40px;
-          height: 40px;
-          border: 4px solid var(--glass-border);
-          border-top-color: var(--color-q2);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
+  );
+}
+
+// Sub-component for Task Item
+function TaskItem({ task, index, deleteTask, toggleComplete, isEditing, editTitle, setEditTitle, startEditing, saveEdit, cancelEdit }) {
+  return (
+    <Draggable draggableId={task.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          className={clsx(
+            'task-card glass-hover',
+            task.completed && 'completed',
+            snapshot.isDragging && 'dragging'
+          )}
+        >
+          <div {...provided.dragHandleProps} className="drag-handle">
+            <GripVertical size={16} />
+          </div>
+          
+          <button 
+            onClick={() => toggleComplete(task)}
+            className={clsx('action-btn btn-complete', task.completed && 'text-green-500')}
+          >
+            <CheckCircle2 size={18} fill={task.completed ? 'currentColor' : 'none'} />
+          </button>
+
+          {isEditing ? (
+            <input 
+              autoFocus
+              className="edit-input"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveEdit(task)}
+            />
+          ) : (
+            <span className="task-text">{task.title}</span>
+          )}
+
+          <div className="task-actions">
+            {isEditing ? (
+              <>
+                <button onClick={() => saveEdit(task)} className="action-btn text-blue-400"><Save size={16}/></button>
+                <button onClick={cancelEdit} className="action-btn"><X size={16}/></button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => startEditing(task)} className="action-btn"><Edit2 size={16}/></button>
+                <button onClick={() => deleteTask(task.id)} className="action-btn btn-delete"><Trash2 size={16}/></button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </Draggable>
   );
 }
