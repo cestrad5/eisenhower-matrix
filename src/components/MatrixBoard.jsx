@@ -229,23 +229,20 @@ export default function MatrixBoard() {
       try {
         const taskRef = doc(db, 'tasks', draggableId);
         const destList = tasks[destination.droppableId];
+        const filteredList = source.droppableId === destination.droppableId 
+          ? destList.filter(t => t.id !== draggableId)
+          : destList;
         
         let newOrder;
-        if (destList.length === 0) {
+        if (filteredList.length === 0) {
           newOrder = 0;
         } else if (destination.index === 0) {
-          newOrder = (destList[0].order || 0) - 1000;
-        } else if (destination.index >= destList.length) {
-          newOrder = (destList[destList.length - 1].order || 0) + 1000;
+          newOrder = (filteredList[0].order || 0) - 1000;
+        } else if (destination.index >= filteredList.length) {
+          newOrder = (filteredList[filteredList.length - 1].order || 0) + 1000;
         } else {
-          // If moving within same list, we need to account for the item being removed
-          const filteredList = source.droppableId === destination.droppableId 
-            ? destList.filter(t => t.id !== draggableId)
-            : destList;
-          
           const prevItem = filteredList[destination.index - 1];
           const nextItem = filteredList[destination.index];
-          
           newOrder = ((prevItem?.order || 0) + (nextItem?.order || 0)) / 2;
         }
 
