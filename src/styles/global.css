@@ -597,3 +597,77 @@ h1, h2, h3 {
   color: var(--text-primary);
   outline: none;
 }
+
+.board-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.user-nav-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-profile-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--bg-main);
+  padding: 4px 12px 4px 4px;
+  border-radius: 100px;
+  border: 1px solid var(--glass-border);
+}
+
+.user-avatar-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  color: var(--card-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.user-name-small {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.logout-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-q1);
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.logout-icon-btn:hover {
+  background: #ff3b3010;
+  border-color: #ff3b3030;
+}
+
+@media (max-width: 480px) {
+  .user-name-small {
+    display: none;
+  }
+  .user-profile-compact {
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+}

@@ -68,9 +68,14 @@ export default function MatrixBoard() {
         }
       });
       
-      // Sort tasks by order (if available) or date
+      // Sort tasks by order (primary) then date
       Object.keys(newTasks).forEach(key => {
-        newTasks[key].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        newTasks[key].sort((a, b) => {
+          if (a.order !== undefined && b.order !== undefined) {
+            return a.order - b.order;
+          }
+          return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+        });
       });
       
       setTasks(newTasks);
@@ -116,11 +121,15 @@ export default function MatrixBoard() {
     const titleToAdd = quadrant === 'inbox' ? newTask : inlineTask;
     if (!titleToAdd.trim() || !user) return;
     
+    const list = tasks[quadrant];
+    const newOrder = list.length > 0 ? Math.min(...list.map(t => t.order || 0)) - 1000 : 0;
+
     const taskData = {
       title: titleToAdd,
       quadrant: quadrant,
       completed: false,
       userId: user.uid,
+      order: newOrder,
       createdAt: isDemo ? { seconds: Date.now() / 1000 } : serverTimestamp()
     };
 
@@ -219,8 +228,30 @@ export default function MatrixBoard() {
     } else {
       try {
         const taskRef = doc(db, 'tasks', draggableId);
+        const destList = tasks[destination.droppableId];
+        
+        let newOrder;
+        if (destList.length === 0) {
+          newOrder = 0;
+        } else if (destination.index === 0) {
+          newOrder = (destList[0].order || 0) - 1000;
+        } else if (destination.index >= destList.length) {
+          newOrder = (destList[destList.length - 1].order || 0) + 1000;
+        } else {
+          // If moving within same list, we need to account for the item being removed
+          const filteredList = source.droppableId === destination.droppableId 
+            ? destList.filter(t => t.id !== draggableId)
+            : destList;
+          
+          const prevItem = filteredList[destination.index - 1];
+          const nextItem = filteredList[destination.index];
+          
+          newOrder = ((prevItem?.order || 0) + (nextItem?.order || 0)) / 2;
+        }
+
         await updateDoc(taskRef, {
           quadrant: destination.droppableId,
+          order: newOrder
         });
       } catch (err) {
         console.error("Error updating task:", err);
@@ -381,13 +412,13 @@ export default function MatrixBoard() {
         <main className="content-area">
           <nav className="board-nav">
              <div className="logo-text gradient-text">TIME</div>
-             <div className="flex items-center gap-4">
-                <div className="user-pill discrete">
-                   <div className="user-avatar">{user.displayName?.[0] || 'U'}</div>
-                   <span className="hidden sm:inline">{user.displayName?.split(' ')[0]}</span>
+             <div className="user-nav-box">
+                <div className="user-profile-compact">
+                   <div className="user-avatar-small">{user.displayName?.[0] || 'U'}</div>
+                   <span className="user-name-small">{user.displayName?.split(' ')[0]}</span>
                 </div>
-                <button onClick={logout} className="action-btn text-red-400 hover:bg-red-500/10 p-2 rounded-full" title="Salir">
-                  <LogOut size={18}/>
+                <button onClick={logout} className="logout-icon-btn" title="Salir">
+                  <LogOut size={16}/>
                 </button>
              </div>
           </nav>
